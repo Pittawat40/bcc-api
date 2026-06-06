@@ -36,6 +36,8 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+app.use("/api/line", require("./routes/lineWebhook"));
+
 // ─────────────────────────────────────────────
 // Routes
 // ─────────────────────────────────────────────

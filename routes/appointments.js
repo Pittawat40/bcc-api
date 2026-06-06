@@ -4,8 +4,9 @@ const router = express.Router();
 const db = require("../db");
 const auth = require("../middleware/auth");
 
-// ── Public ────────────────────────────────────────────────
+const { notifyNewAppointment } = require("../utils/lineMessaging");
 
+// ── Public ────────────────────────────────────────────────
 router.get("/check-new", auth, (req, res) => {
   const { since } = req.query;
 
@@ -34,7 +35,7 @@ router.get("/check-new", auth, (req, res) => {
 });
 
 // POST /api/appointments  — ลูกค้าส่งฟอร์มนัดหมาย
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   const { name, phone, email, service, message } = req.body;
   if (!name || !phone) {
     return res.status(400).json({ error: "กรุณากรอกชื่อและเบอร์โทรศัพท์" });
@@ -47,6 +48,8 @@ router.post("/", (req, res) => {
   `,
     )
     .run(name, phone, email || "", service || "", message || "");
+
+  await notifyNewAppointment({ name, phone, email, service, message });
 
   res.status(201).json({
     id: result.lastInsertRowid,
