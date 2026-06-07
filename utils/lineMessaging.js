@@ -94,13 +94,12 @@ async function notifyNewAppointment({ name, phone, email, service, message }) {
                 {
                   type: "box",
                   layout: "vertical",
-                  paddingAll: "16px",
-                  spacing: "md",
+                  paddingAll: "20px",
+                  spacing: "lg",
                   contents: [
                     buildRow("📞", "โทรศัพท์", formatPhone(phone)),
                     buildRow("✉️", "อีเมล", email || "-"),
                     buildRow("💼", "บริการ", service || "-"),
-                    buildRow("📝", "หมายเหตุ", message || "-"),
                   ],
                 },
               ],
@@ -149,30 +148,42 @@ function formatPhone(phone) {
 function buildRow(icon, label, value) {
   return {
     type: "box",
-    layout: "horizontal",
-    spacing: "md",
+    layout: "vertical",
+    spacing: "xs",
     contents: [
       {
-        type: "text",
-        text: icon,
-        flex: 0,
-        size: "sm",
+        type: "box",
+        layout: "horizontal",
+        spacing: "sm",
+        contents: [
+          {
+            type: "text",
+            text: icon,
+            flex: 0,
+            size: "sm",
+          },
+          {
+            type: "text",
+            text: label,
+            size: "sm",
+            color: "#888888",
+            weight: "bold",
+          },
+        ],
       },
       {
-        type: "text",
-        text: label,
-        size: "sm",
-        color: "#888888",
-        flex: 3,
-      },
-      {
-        type: "text",
-        text: value,
-        size: "sm",
-        color: "#333333",
-        flex: 5,
-        wrap: true,
-        align: "end",
+        type: "box",
+        layout: "vertical",
+        paddingStart: "22px",
+        contents: [
+          {
+            type: "text",
+            text: value,
+            size: "sm",
+            color: "#333333",
+            wrap: true,
+          },
+        ],
       },
     ],
   };
