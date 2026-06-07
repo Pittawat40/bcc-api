@@ -184,6 +184,15 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now','localtime')),
     updated_at TEXT DEFAULT (datetime('now','localtime'))
   );
+
+  CREATE TABLE IF NOT EXISTS visitor_logs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip         TEXT DEFAULT '',
+    path       TEXT DEFAULT '/',
+    user_agent TEXT DEFAULT '',
+    referrer   TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now','localtime'))
+  );
 `);
 
 // ─────────────────────────────────────────────
@@ -196,6 +205,9 @@ function addColumnIfMissing(table, column, type) {
     console.log(`✅ Migrated: ${table}.${column}`);
   }
 }
+
+addColumnIfMissing("appointments", "appointment_date", "TEXT DEFAULT ''");
+addColumnIfMissing("visitor_logs", "referrer", "TEXT DEFAULT ''");
 
 // Articles
 addColumnIfMissing("articles", "title_en", "TEXT DEFAULT ''");

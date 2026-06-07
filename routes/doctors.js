@@ -17,7 +17,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 } });
 
-// 🟢 1. เพิ่ม Middleware ตัวนี้เข้าไปเพื่อดักจับ Error จาก Multer โดยเฉพาะ
 const uploadPhoto = (req, res, next) => {
   upload.single("photo")(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -62,7 +61,6 @@ router.get("/admin/all", auth, (req, res) => {
   res.json({ doctors: doctors.map(parseJsonFields), total });
 });
 
-// 🟢 2. เปลี่ยนจาก `upload.single("photo")` มาเรียกใช้ `uploadPhoto` ที่เราสร้างไว้แทน
 router.post("/", auth, uploadPhoto, async (req, res) => {
   const {
     name,
@@ -158,7 +156,6 @@ router.get("/:id", (req, res) => {
   res.json(parseJsonFields(doctor));
 });
 
-// 🟢 3. อัปเดตตรงนี้ให้ใช้ `uploadPhoto` ด้วยเช่นกันครับ
 router.post("/:id", auth, uploadPhoto, handleUpdate);
 router.put("/:id", auth, uploadPhoto, handleUpdate);
 

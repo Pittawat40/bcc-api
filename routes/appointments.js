@@ -1,4 +1,3 @@
-// routes/appointments.js
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
@@ -6,45 +5,50 @@ const auth = require("../middleware/auth");
 
 const { notifyNewAppointment } = require("../utils/lineMessaging");
 
-// ── Public ────────────────────────────────────────────────
 router.get("/check-new", auth, (req, res) => {
   const { since } = req.query;
 
   const sinceTime = since
     ? String(since).replace("T", " ").slice(0, 19)
-    : new Date(Date.now() - 5 * 60 * 1000)
-        .toISOString()
-        .replace("T", " ")
-        .slice(0, 19);
+    : db.prepare("SELECT datetime('now', 'localtime', '-5 minutes')").get()[
+        "datetime('now', 'localtime', '-5 minutes')"
+      ];
 
   const newAppts = db
-    .prepare("SELECT COUNT(*) as count FROM appointments WHERE created_at > ?")
+    .prepare(
+      "SELECT COUNT(*) as count FROM appointments WHERE datetime(created_at) >= datetime(?)",
+    )
     .get(sinceTime);
 
   const latest = db
     .prepare(
-      "SELECT * FROM appointments WHERE created_at > ? ORDER BY created_at DESC LIMIT 5",
+      "SELECT * FROM appointments WHERE datetime(created_at) >= datetime(?) ORDER BY created_at DESC LIMIT 5",
     )
     .all(sinceTime);
+
+  const currentServerTime = db
+    .prepare("SELECT datetime('now', 'localtime')")
+    .get()["datetime('now', 'localtime')"];
 
   res.json({
     hasNew: newAppts.count > 0,
     count: newAppts.count,
     latest,
+    serverTime: currentServerTime,
   });
 });
 
-// POST /api/appointments  — ลูกค้าส่งฟอร์มนัดหมาย
 router.post("/", async (req, res) => {
   const { name, phone, email, service, message } = req.body;
   if (!name || !phone) {
     return res.status(400).json({ error: "กรุณากรอกชื่อและเบอร์โทรศัพท์" });
   }
+
   const result = db
     .prepare(
       `
-    INSERT INTO appointments (name, phone, email, service, message)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO appointments (name, phone, email, service, message, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
   `,
     )
     .run(name, phone, email || "", service || "", message || "");
@@ -57,9 +61,6 @@ router.post("/", async (req, res) => {
   });
 });
 
-// ── Admin ────────────────────────────────────────────────
-
-// GET /api/appointments/admin/all
 router.get("/admin/all", auth, (req, res) => {
   const { status, limit = 50, offset = 0, search } = req.query;
   const conditions = [];
@@ -78,22 +79,22 @@ router.get("/admin/all", auth, (req, res) => {
     ? " WHERE " + conditions.join(" AND ")
     : "";
 
-  let mainQuery =
+  const mainQuery =
     "SELECT * FROM appointments" +
     whereClause +
     " ORDER BY created_at DESC LIMIT ? OFFSET ?";
   const mainParams = [...baseParams, Number(limit), Number(offset)];
   const rows = db.prepare(mainQuery).all(...mainParams);
 
-  let totalQuery = "SELECT COUNT(*) as count FROM appointments" + whereClause;
+  const totalQuery = "SELECT COUNT(*) as count FROM appointments" + whereClause;
   const total = db.prepare(totalQuery).get(...baseParams).count;
 
   res.json({ appointments: rows, total });
 });
 
-// PUT /api/appointments/:id  — เปลี่ยนสถานะ (pending/contacted/done/cancelled)
 router.put("/:id", auth, (req, res) => {
-  const { status, note } = req.body;
+  let { status, note, appointment_date } = req.body;
+
   const row = db
     .prepare("SELECT * FROM appointments WHERE id = ?")
     .get(req.params.id);
@@ -102,17 +103,21 @@ router.put("/:id", auth, (req, res) => {
   db.prepare(
     `
     UPDATE appointments
-    SET status = ?, note = ?, updated_at = datetime('now','localtime')
+    SET status = ?, note = ?, appointment_date = ?, updated_at = datetime('now','localtime')
     WHERE id = ?
   `,
-  ).run(status || row.status, note ?? row.note, req.params.id);
+  ).run(
+    status || row.status,
+    note ?? row.note,
+    appointment_date ?? row.appointment_date,
+    req.params.id,
+  );
 
   res.json(
     db.prepare("SELECT * FROM appointments WHERE id = ?").get(req.params.id),
   );
 });
 
-// DELETE /api/appointments/:id
 router.delete("/:id", auth, (req, res) => {
   const row = db
     .prepare("SELECT * FROM appointments WHERE id = ?")

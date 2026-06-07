@@ -30,6 +30,7 @@ app.use(
     credentials: true,
   }),
 );
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -42,6 +43,7 @@ app.use("/api/line", require("./routes/lineWebhook"));
 // Routes
 // ─────────────────────────────────────────────
 app.use("/api/auth", require("./routes/auth"));
+app.use("/api/dashboard", require("./routes/dashboard"));
 app.use("/api/articles", require("./routes/articles"));
 app.use("/api/article-categories", require("./routes/article-categories"));
 app.use("/api/videos", require("./routes/videos"));
