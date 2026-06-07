@@ -82,7 +82,7 @@ async function notifyNewAppointment({ name, phone, email, service, message }) {
                   contents: [
                     {
                       type: "text",
-                      text: `${name}`,
+                      text: `คุณ${name}`,
                       size: "md",
                       weight: "bold",
                       color: "#8B6914",
