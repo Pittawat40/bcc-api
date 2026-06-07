@@ -26,7 +26,12 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 // ─────────────────────────────────────────────
 app.use(
   cors({
-    origin: [FRONTEND_URL, "http://localhost:3000", "http://localhost:4000"],
+    origin: [
+      FRONTEND_URL,
+      "https://bcc-ivf.netlify.app",
+      "http://localhost:3000",
+      "http://localhost:4000",
+    ],
     credentials: true,
   }),
 );
