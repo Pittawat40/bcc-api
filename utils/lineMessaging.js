@@ -221,8 +221,8 @@ async function notifyReminderAppointment({
               background: {
                 type: "linearGradient",
                 angle: "135deg",
-                startColor: "#e67e22",
-                endColor: "#d35400",
+                startColor: "#4A6572",
+                endColor: "#232F34",
               },
               contents: [
                 {
@@ -249,8 +249,8 @@ async function notifyReminderAppointment({
                         },
                         {
                           type: "text",
-                          text: "โปรดเตรียมความพร้อมก่อนให้บริการ",
-                          color: "#FFE8B2",
+                          text: "ระบบเตือนความจำนัดหมายอัตโนมัติ",
+                          color: "#F9AA33",
                           size: "xs",
                           margin: "xs",
                         },
@@ -270,24 +270,6 @@ async function notifyReminderAppointment({
                 buildRow("📞", "เบอร์โทรศัพท์", formatPhone(phone)),
                 buildRow("📅", "เวลานัดหมาย", formattedDate),
                 buildRow("💼", "บริการ", service || "-"),
-              ],
-            },
-            footer: {
-              type: "box",
-              layout: "vertical",
-              paddingAll: "16px",
-              contents: [
-                {
-                  type: "button",
-                  style: "primary",
-                  color: "#d35400",
-                  height: "sm",
-                  action: {
-                    type: "uri",
-                    label: "ดูรายละเอียดใน Dashboard",
-                    uri: process.env.DASHBOARD_URL,
-                  },
-                },
               ],
             },
           },
