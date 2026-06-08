@@ -75,7 +75,7 @@ app.get("/api/health", (req, res) => {
 // Auto-Reminder Cron Job (ทำงานทุกวัน เวลา 09:00 น.)
 // ─────────────────────────────────────────────
 cron.schedule(
-  "*/1 * * * *",
+  "0 9 * * *",
   async () => {
     try {
       const tomorrowAppts = db
