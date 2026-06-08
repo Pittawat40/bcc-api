@@ -222,7 +222,7 @@ async function notifyReminderAppointment({
                 type: "linearGradient",
                 angle: "135deg",
                 startColor: "#4A6572",
-                endColor: "#232F34",
+                endColor: "#2f4048",
               },
               contents: [
                 {
@@ -247,13 +247,6 @@ async function notifyReminderAppointment({
                           weight: "bold",
                           size: "lg",
                         },
-                        {
-                          type: "text",
-                          text: "ระบบเตือนความจำนัดหมายอัตโนมัติ",
-                          color: "#F9AA33",
-                          size: "xs",
-                          margin: "xs",
-                        },
                       ],
                     },
                   ],
@@ -276,7 +269,6 @@ async function notifyReminderAppointment({
         },
       ],
     });
-    console.log(`LINE reminder sent for คุณ${name} ✅`);
   } catch (e) {
     console.error("LINE Reminder error:", e.message);
   }
