@@ -83,22 +83,14 @@ cron.schedule(
           `
           SELECT * FROM appointments 
           WHERE date(appointment_date) = date('now', 'localtime', '+1 day')
-          AND status = 'confirmed'
+          AND status = 'done'
         `,
         )
         .all();
 
       if (tomorrowAppts.length === 0) {
-        console.log(
-          "📌 [Cron Job] ไม่มีนัดหมายที่ต้องแจ้งเตือนสำหรับวันพรุ่งนี้",
-        );
         return;
       }
-
-      console.log(
-        `📌 [Cron Job] พบนัดหมายวันพรุ่งนี้ทั้งหมด ${tomorrowAppts.length} รายการ เริ่มทยอยส่งไลน์...`,
-      );
-
       for (const appt of tomorrowAppts) {
         await notifyReminderAppointment({
           name: appt.name,
@@ -108,7 +100,7 @@ cron.schedule(
         });
       }
     } catch (error) {
-      console.error("❌ [Cron Job Error]:", error.message);
+      console.error(error.message);
     }
   },
   {
