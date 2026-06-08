@@ -100,6 +100,7 @@ async function notifyNewAppointment({ name, phone, email, service, message }) {
                     buildRow("📞", "โทรศัพท์", formatPhone(phone)),
                     buildRow("✉️", "อีเมล", email || "-"),
                     buildRow("💼", "บริการ", service || "-"),
+                    buildRow("📝", "หมายเหตุ", message || "-"),
                   ],
                 },
               ],
