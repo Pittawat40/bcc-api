@@ -202,7 +202,7 @@ function addColumnIfMissing(table, column, type) {
   const cols = db.prepare(`PRAGMA table_info(${table})`).all();
   if (!cols.find((c) => c.name === column)) {
     db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`).run();
-    console.log(`✅ Migrated: ${table}.${column}`);
+    console.log(`Migrated: ${table}.${column}`);
   }
 }
 
@@ -239,12 +239,12 @@ addColumnIfMissing("stories", "story_en", "TEXT DEFAULT ''");
 addColumnIfMissing("stories", "author_en", "TEXT DEFAULT ''");
 
 // ─────────────────────────────────────────────
-// Seed default data if empty
+// Seed default admin account
 // ─────────────────────────────────────────────
-function seedIfEmpty() {
+function seedAdmin() {
   const crypto = require("crypto");
 
-  // Admin
+  // ตรวจสอบและสร้าง Admin หลักหากยังไม่มี เพื่อให้ระบบสามารถ Login ได้
   const adminExists = db
     .prepare("SELECT id FROM admins WHERE username = ?")
     .get("admin");
@@ -257,198 +257,8 @@ function seedIfEmpty() {
     );
     console.log("✅ Default admin created: admin / admin1234");
   }
-
-  // Contact Info
-  const contactExists = db.prepare("SELECT id FROM contact_info LIMIT 1").get();
-  if (!contactExists) {
-    const contacts = [
-      {
-        key: "phone",
-        label: "โทรศัพท์",
-        value: "02-xxx-xxxx",
-        href: "tel:02xxxxxxx",
-        icon: "phone",
-        sort_order: 1,
-      },
-      {
-        key: "line",
-        label: "LINE",
-        value: "@bcc-ivf",
-        href: "https://line.me/R/ti/p/@bcc-ivf",
-        icon: "line",
-        sort_order: 2,
-      },
-      {
-        key: "email",
-        label: "อีเมล",
-        value: "info@bcc-ivf.com",
-        href: "mailto:info@bcc-ivf.com",
-        icon: "email",
-        sort_order: 3,
-      },
-      {
-        key: "address",
-        label: "ที่อยู่",
-        value: "กรุงเทพมหานคร",
-        href: null,
-        icon: "map",
-        sort_order: 4,
-      },
-    ];
-    const stmt = db.prepare(
-      "INSERT INTO contact_info (key,label,value,href,icon,sort_order) VALUES (?,?,?,?,?,?)",
-    );
-    contacts.forEach((c) =>
-      stmt.run(c.key, c.label, c.value, c.href, c.icon, c.sort_order),
-    );
-  }
-
-  // Social Media
-  const socialExists = db.prepare("SELECT id FROM social_media LIMIT 1").get();
-  if (!socialExists) {
-    const socials = [
-      {
-        platform: "facebook",
-        url: "https://facebook.com/bcc-ivf",
-        label: "Facebook",
-        icon: "facebook",
-        sort_order: 1,
-      },
-      {
-        platform: "line",
-        url: "https://line.me/R/ti/p/@bcc-ivf",
-        label: "LINE OA",
-        icon: "line",
-        sort_order: 2,
-      },
-      {
-        platform: "instagram",
-        url: "https://instagram.com/bcc-ivf",
-        label: "Instagram",
-        icon: "instagram",
-        sort_order: 3,
-      },
-      {
-        platform: "youtube",
-        url: "https://youtube.com/@bcc-ivf",
-        label: "YouTube",
-        icon: "youtube",
-        sort_order: 4,
-      },
-    ];
-    const stmt = db.prepare(
-      "INSERT INTO social_media (platform,url,label,icon,sort_order) VALUES (?,?,?,?,?)",
-    );
-    socials.forEach((s) =>
-      stmt.run(s.platform, s.url, s.label, s.icon, s.sort_order),
-    );
-  }
-
-  // Sample FAQ
-  const faqExists = db.prepare("SELECT id FROM faqs LIMIT 1").get();
-  if (!faqExists) {
-    db.prepare(
-      "INSERT INTO faqs (question,question_en,answer,answer_en,category,sort_order,status) VALUES (?,?,?,?,?,?,?)",
-    ).run(
-      "IVF คืออะไร?",
-      "What is IVF?",
-      "IVF (In Vitro Fertilization) คือการทำเด็กหลอดแก้ว โดยการนำไข่และอสุจิมาผสมกันนอกร่างกาย",
-      "IVF (In Vitro Fertilization) is a process where eggs and sperm are combined outside the body.",
-      "เกี่ยวกับ IVF",
-      1,
-      "published",
-    );
-  }
-
-  // Sample Doctor
-  const doctorExists = db.prepare("SELECT id FROM doctors LIMIT 1").get();
-  if (!doctorExists) {
-    const { v4: uuidv4 } = require("uuid");
-    db.prepare(
-      "INSERT INTO doctors (id,name,name_en,title,title_en,bio,bio_en,education,education_en,specialties,avatar_grad,sort_order,status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-    ).run(
-      uuidv4(),
-      "รศ.ดร.นพ. วิชัย สุขใจ",
-      "Assoc.Prof.Dr. Wichai Sukjai",
-      "แพทย์เฉพาะทางเวชศาสตร์การเจริญพันธุ์",
-      "Reproductive Medicine Specialist",
-      "ผู้เชี่ยวชาญด้าน IVF และเวชศาสตร์การเจริญพันธุ์ประสบการณ์กว่า 15 ปี",
-      "IVF and reproductive medicine specialist with over 15 years of experience.",
-      JSON.stringify([
-        "แพทยศาสตร์บัณฑิต มหาวิทยาลัยมหิดล",
-        "วุฒิบัตร สูตินรีเวชศาสตร์",
-      ]),
-      JSON.stringify(["M.D., Mahidol University", "Board Certified OB/GYN"]),
-      JSON.stringify(["IVF", "ICSI", "PGT"]),
-      "from-brand-400 to-brand-600",
-      1,
-      "published",
-    );
-  }
-
-  // Sample Gallery
-  const galleryExists = db.prepare("SELECT id FROM gallery LIMIT 1").get();
-  if (!galleryExists) {
-    const { v4: uuidv4 } = require("uuid");
-    const items = [
-      {
-        caption_th: "ห้องรับรองและปรึกษาแพทย์ ดีไซน์อบอุ่นเป็นกันเอง",
-        caption_en: "Consultation & lounge area with a warm, welcoming design",
-        media_url: "/images/consult.mp4",
-        media_type: "video",
-        col_span: "md:col-span-8",
-        row_span: "md:row-span-1",
-        sort_order: 1,
-      },
-      {
-        caption_th: "เทคโนโลยีตู้เลี้ยงตัวอ่อนความละเอียดสูง",
-        caption_en: "High-resolution embryo incubator technology",
-        media_url: "/images/iui.mp4",
-        media_type: "video",
-        col_span: "md:col-span-4",
-        row_span: "md:row-span-2",
-        sort_order: 2,
-      },
-      {
-        caption_th: "ทีมแพทย์และนักวิทยาศาสตร์ใส่ใจทุกรายละเอียด",
-        caption_en:
-          "Dedicated medical team and embryologists meticulously caring for details",
-        media_url: "/images/doctor.mp4",
-        media_type: "video",
-        col_span: "md:col-span-4",
-        row_span: "md:row-span-1",
-        sort_order: 3,
-      },
-      {
-        caption_th: "ห้องแล็บเลี้ยงตัวอ่อนระบบควบคุมความสะอาดระดับสูง",
-        caption_en:
-          "High-standard cleanroom system for the embryo cultivation lab",
-        media_url: "/images/ivf.mp4",
-        media_type: "video",
-        col_span: "md:col-span-4",
-        row_span: "md:row-span-1",
-        sort_order: 4,
-      },
-    ];
-    const stmt = db.prepare(
-      "INSERT INTO gallery (id,caption_th,caption_en,media_url,media_type,col_span,row_span,sort_order,status) VALUES (?,?,?,?,?,?,?,?,?)",
-    );
-    items.forEach((g) =>
-      stmt.run(
-        uuidv4(),
-        g.caption_th,
-        g.caption_en,
-        g.media_url,
-        g.media_type,
-        g.col_span,
-        g.row_span,
-        g.sort_order,
-        "published",
-      ),
-    );
-  }
 }
 
-seedIfEmpty();
+seedAdmin();
 
 module.exports = db;
