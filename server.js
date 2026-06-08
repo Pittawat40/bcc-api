@@ -5,10 +5,14 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const cron = require("node-cron");
 
 const app = express();
 const PORT = process.env.PORT || 4002;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+
+const db = require("./db");
+const { notifyReminderAppointment } = require("./utils/lineMessaging");
 
 // Ensure upload directories exist
 [
@@ -66,6 +70,52 @@ app.use("/api/gallery", require("./routes/gallery"));
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", version: "2.0.0", time: new Date().toISOString() });
 });
+
+// ─────────────────────────────────────────────
+// Auto-Reminder Cron Job (ทำงานทุกวัน เวลา 09:00 น.)
+// ─────────────────────────────────────────────
+cron.schedule(
+  "0 9 * * *",
+  async () => {
+    try {
+      const tomorrowAppts = db
+        .prepare(
+          `
+          SELECT * FROM appointments 
+          WHERE date(appointment_date) = date('now', 'localtime', '+1 day')
+          AND status = 'confirmed'
+        `,
+        )
+        .all();
+
+      if (tomorrowAppts.length === 0) {
+        console.log(
+          "📌 [Cron Job] ไม่มีนัดหมายที่ต้องแจ้งเตือนสำหรับวันพรุ่งนี้",
+        );
+        return;
+      }
+
+      console.log(
+        `📌 [Cron Job] พบนัดหมายวันพรุ่งนี้ทั้งหมด ${tomorrowAppts.length} รายการ เริ่มทยอยส่งไลน์...`,
+      );
+
+      for (const appt of tomorrowAppts) {
+        await notifyReminderAppointment({
+          name: appt.name,
+          phone: appt.phone,
+          service: appt.service,
+          appointmentDate: appt.appointment_date,
+        });
+      }
+    } catch (error) {
+      console.error("❌ [Cron Job Error]:", error.message);
+    }
+  },
+  {
+    scheduled: true,
+    timezone: "Asia/Bangkok",
+  },
+);
 
 // ─────────────────────────────────────────────
 // Start

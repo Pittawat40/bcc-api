@@ -190,4 +190,114 @@ function buildRow(icon, label, value) {
   };
 }
 
-module.exports = { notifyNewAppointment };
+async function notifyReminderAppointment({
+  name,
+  phone,
+  service,
+  appointmentDate,
+}) {
+  const groupId = process.env.LINE_GROUP_ID;
+  if (!groupId) return;
+
+  const formattedDate = new Date(appointmentDate).toLocaleString("th-TH", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  try {
+    await client.pushMessage({
+      to: groupId,
+      messages: [
+        {
+          type: "flex",
+          altText: `⏰ เตือนความจำนัดหมายวันพรุ่งนี้: คุณ${name}`,
+          contents: {
+            type: "bubble",
+            size: "mega",
+            header: {
+              type: "box",
+              layout: "vertical",
+              paddingAll: "20px",
+              background: {
+                type: "linearGradient",
+                angle: "135deg",
+                startColor: "#e67e22",
+                endColor: "#d35400",
+              },
+              contents: [
+                {
+                  type: "box",
+                  layout: "horizontal",
+                  contents: [
+                    {
+                      type: "text",
+                      text: "⏰",
+                      size: "xxl",
+                      flex: 0,
+                    },
+                    {
+                      type: "box",
+                      layout: "vertical",
+                      margin: "md",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "แจ้งเตือนนัดหมายวันพรุ่งนี้",
+                          color: "#ffffff",
+                          weight: "bold",
+                          size: "lg",
+                        },
+                        {
+                          type: "text",
+                          text: "โปรดเตรียมความพร้อมก่อนให้บริการ",
+                          color: "#FFE8B2",
+                          size: "xs",
+                          margin: "xs",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            body: {
+              type: "box",
+              layout: "vertical",
+              paddingAll: "20px",
+              spacing: "lg",
+              contents: [
+                buildRow("👤", "ชื่อผู้นัดหมาย", `คุณ${name}`),
+                buildRow("📞", "เบอร์โทรศัพท์", formatPhone(phone)),
+                buildRow("📅", "เวลานัดหมาย", formattedDate),
+                buildRow("💼", "บริการ", service || "-"),
+              ],
+            },
+            footer: {
+              type: "box",
+              layout: "vertical",
+              paddingAll: "16px",
+              contents: [
+                {
+                  type: "button",
+                  style: "primary",
+                  color: "#d35400",
+                  height: "sm",
+                  action: {
+                    type: "uri",
+                    label: "ดูรายละเอียดใน Dashboard",
+                    uri: process.env.DASHBOARD_URL,
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
+    console.log(`LINE reminder sent for คุณ${name} ✅`);
+  } catch (e) {
+    console.error("LINE Reminder error:", e.message);
+  }
+}
+
+module.exports = { notifyNewAppointment, notifyReminderAppointment };
