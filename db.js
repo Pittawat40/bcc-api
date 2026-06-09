@@ -195,6 +195,18 @@ db.exec(`
   );
 `);
 
+// Refresh Tokens
+db.exec(`
+  CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_id   INTEGER NOT NULL,
+    token      TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now','localtime')),
+    FOREIGN KEY (admin_id) REFERENCES admins(id) ON DELETE CASCADE
+  )
+`);
+
 // ─────────────────────────────────────────────
 // Runtime column migrations (idempotent)
 // ─────────────────────────────────────────────

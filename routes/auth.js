@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
+const { v4: uuidv4 } = require("uuid");
 const db = require("../db");
 const auth = require("../middleware/auth");
 
@@ -25,13 +26,69 @@ router.post("/login", (req, res) => {
     return res.status(401).json({ error: "username หรือ password ไม่ถูกต้อง" });
   }
 
-  const token = jwt.sign(
+  const accessToken = jwt.sign(
     { id: admin.id, username: admin.username },
     process.env.JWT_SECRET || "secret",
-    { expiresIn: "7d" },
+    { expiresIn: "15m" },
   );
 
-  res.json({ token, username: admin.username });
+  const refreshToken = uuidv4();
+  const expiresAt = new Date(
+    Date.now() + 30 * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  db.prepare(
+    "INSERT INTO refresh_tokens (admin_id, token, expires_at) VALUES (?, ?, ?)",
+  ).run(admin.id, refreshToken, expiresAt);
+
+  res.json({ accessToken, refreshToken, username: admin.username });
+});
+
+// POST /api/auth/refresh
+router.post("/refresh", (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    return res.status(400).json({ error: "ไม่มี refreshToken" });
+  }
+
+  const row = db
+    .prepare("SELECT * FROM refresh_tokens WHERE token = ?")
+    .get(refreshToken);
+
+  if (!row) {
+    return res.status(403).json({ error: "refreshToken ไม่ถูกต้อง" });
+  }
+
+  if (new Date(row.expires_at) < new Date()) {
+    db.prepare("DELETE FROM refresh_tokens WHERE token = ?").run(refreshToken);
+    return res
+      .status(403)
+      .json({ error: "refreshToken หมดอายุ กรุณาเข้าสู่ระบบใหม่" });
+  }
+
+  const admin = db
+    .prepare("SELECT * FROM admins WHERE id = ?")
+    .get(row.admin_id);
+  if (!admin) {
+    return res.status(403).json({ error: "ไม่พบ admin" });
+  }
+
+  const accessToken = jwt.sign(
+    { id: admin.id, username: admin.username },
+    process.env.JWT_SECRET || "secret",
+    { expiresIn: "15m" },
+  );
+
+  res.json({ accessToken });
+});
+
+// POST /api/auth/logout
+router.post("/logout", (req, res) => {
+  const { refreshToken } = req.body;
+  if (refreshToken) {
+    db.prepare("DELETE FROM refresh_tokens WHERE token = ?").run(refreshToken);
+  }
+  res.json({ message: "ออกจากระบบแล้ว" });
 });
 
 // GET /api/auth/me
