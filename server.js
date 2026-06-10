@@ -32,7 +32,7 @@ app.use(
   cors({
     origin: [
       FRONTEND_URL,
-      "https://bcc-ivf.netlify.app",
+      "https://bcc-ivf-demo.netlify.app",
       "http://localhost:3000",
       "http://localhost:4000",
     ],
